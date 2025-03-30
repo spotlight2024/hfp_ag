@@ -1,0 +1,80 @@
+dependencies:
+  78/esp-opus:
+    component_hash: c8a448f5ebca4e97e43e93c02ebb3940ff484ad573cb3348f917a88af094b260
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=5.0'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 1.0.4
+  espressif/esp-dsp:
+    component_hash: 3e7bbd487f1357a1d4944d0c85966d049501ea281b8a4c7f93f7cfedd5b7f23d
+    dependencies:
+    - name: idf
+      registry_url: https://components.espressif.com
+      require: private
+      version: '>=4.2'
+    source:
+      registry_url: https://components.espressif.com
+      type: service
+    version: 1.4.12
+  espressif/esp-sr:
+    component_hash: 76b432626af3422595f895f03155354defa9f64dbc76cf22aebd101367bb0564
+    dependencies:
+    - name: espressif/esp-dsp
+      registry_url: https://components.espressif.com
+      require: private
+      version: <=1.5.0
+    - name: idf
+      require: private
+      version: '>=5.0'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 2.0.2
+  espressif/esp_audio_codec:
+    component_hash: 92cb0441b1602835f24eca63ab4a1528897a137527a6cadb2f8cd0eba32d76ff
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=4.4'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 2.2.1
+  espressif/esp_websocket_client:
+    component_hash: f77326f0e1c38da4e9c97e17c5d649b0dd13027f2645e720e48db269638fd622
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=5.0'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 1.4.0
+  idf:
+    source:
+      type: idf
+    version: 5.3.1
+  ningzixi/ws2812_control:
+    component_hash: f3fa7613564fb48ff18bb4a3dcc4c1e30e7cc05bf8bcc165cb7730a609566e78
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=4.4.7'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 1.2.0
+direct_dependencies:
+- 78/esp-opus
+- espressif/esp-sr
+- espressif/esp_audio_codec
+- espressif/esp_websocket_client
+- idf
+- ningzixi/ws2812_control
+manifest_hash: f31aec097158da6f7cf4fe0e683f11c1ecdfb0653790b4e2a290bf745f216ff5
+target: esp32
+version: 2.0.0

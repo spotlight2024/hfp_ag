@@ -1,0 +1,11 @@
+idf_component_register(SRCS "app_hf_msg_set.c"
+                            "bt_app_core.c"
+                            "bt_app_hf.c"
+                            "bt_app_ws.c"
+                            "gpio_pcm_config.c"
+                            "app_status_led.c"
+                            "app_sr.c"
+                            "app_opus_codec.c"
+                            "main.c"
+                    INCLUDE_DIRS "."
+                    EMBED_TXTFILES server_root_cert.pem)
