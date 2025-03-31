@@ -17,7 +17,7 @@
 
 #include "esp_tls.h"
 #include "esp_tls_errors.h"
-#include "esp_crt_bundle.h"
+//#include "esp_crt_bundle.h"
 
 #include "app_status_led.h"
 #include "bt_wifi_info.h"
@@ -27,8 +27,8 @@
 
 EventGroupHandle_t app_ws_eventgroup = NULL;
 
-//extern const uint8_t server_root_cert_pem_start[] asm("_binary_server_root_cert_pem_start");
-//extern const uint8_t server_root_cert_pem_end[]   asm("_binary_server_root_cert_pem_end");
+extern const uint8_t server_root_cert_pem_start[] asm("_binary_cacert_pem_start");
+extern const uint8_t server_root_cert_pem_end[]   asm("_binary_cacert_pem_end");
 
 //extern const uint8_t local_server_cert_pem_start[] asm("_binary_local_server_cert_pem_start");
 //extern const uint8_t local_server_cert_pem_end[]   asm("_binary_local_server_cert_pem_end");
@@ -318,19 +318,19 @@ void websocket_app1_start(void)
 	// 配置目标服务器
 	websocket_cfg.uri = CONFIG_WEBSOCKET_URI;
 	websocket_cfg.task_prio = (configMAX_PRIORITIES - 4);
-	//websocket_cfg.use_global_ca_store = true;
+	websocket_cfg.use_global_ca_store = true;
 	//websocket_cfg.transport = WEBSOCKET_TRANSPORT_OVER_SSL;
-	websocket_cfg.crt_bundle_attach = esp_crt_bundle_attach;
+	//websocket_cfg.crt_bundle_attach = esp_crt_bundle_attach;
 	websocket_cfg.task_stack = (10 * 1024);
 
 	ESP_LOGI(TAG, "Connecting to %s...", websocket_cfg.uri);
 	//ESP_LOGI("GGGCCC", "%s", WS_HELLO);
 
-	//esp_ret = esp_tls_set_global_ca_store(server_root_cert_pem_start, server_root_cert_pem_end - server_root_cert_pem_start);
-    //if (esp_ret != ESP_OK) {
-    //    ESP_LOGE(TAG, "Error in setting the global ca store: [%02X] (%s),could not complete the https_request using global_ca_store", esp_ret, esp_err_to_name(esp_ret));
-    //    return;
-    //}
+	esp_ret = esp_tls_set_global_ca_store(server_root_cert_pem_start, server_root_cert_pem_end - server_root_cert_pem_start);
+    if (esp_ret != ESP_OK) {
+        ESP_LOGE(TAG, "Error in setting the global ca store: [%02X] (%s),could not complete the https_request using global_ca_store", esp_ret, esp_err_to_name(esp_ret));
+        return;
+    }
 
 	// 创建WebSocket客户端
 	client = esp_websocket_client_init(&websocket_cfg);
@@ -397,7 +397,7 @@ void websocket_app1_stop(void)
 		esp_websocket_client_destroy(client);
 		client = NULL;
 
-		//esp_tls_free_global_ca_store();
+		esp_tls_free_global_ca_store();
 	}	
 }
 

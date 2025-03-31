@@ -399,7 +399,7 @@ void bt_app_send_data(void)
         ESP_LOGE(BT_HF_TAG, "apply websocket ringbuff error!");
     }
     //xTaskCreate(bt_ws_send_data_task, "WS_SendDataTask", 48 * 1024, NULL, configMAX_PRIORITIES - 15, &bt_ws_send_data_task_handler);
-    xTaskCreatePinnedToCore(bt_ws_send_data_task, "WS_SendDataTask", 48 * 1024, NULL, configMAX_PRIORITIES - 5, &bt_ws_send_data_task_handler,1);
+    xTaskCreatePinnedToCore(bt_ws_send_data_task, "WS_SendDataTask", 48 * 1024, NULL, configMAX_PRIORITIES - 5, &bt_ws_send_data_task_handler,0);
     const esp_timer_create_args_t ws_periodic_timer_args = {
             .callback = &bt_app_ws_send_data_timer_cb,
             .name = "ws_periodic"
