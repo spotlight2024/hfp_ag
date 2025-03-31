@@ -22,7 +22,6 @@ enum DeviceState GetDeviceLedState(void)
 
 void SetDeviceLedState(enum DeviceState state)
 {
-    ESP_LOGI("LED", "state is: %d",state);
     led_set_off(WS2812);
     device_state_ = state;
     switch (state)
