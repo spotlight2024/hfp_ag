@@ -146,8 +146,8 @@ static const int16_t sine_int16[TABLE_SIZE] = {
 
 static long s_data_num = 0;
 RingbufHandle_t s_m_rb = NULL;
-static RingbufHandle_t m_ws_rb = NULL;        // websocket ringbuf
-static uint64_t s_time_new, s_time_old;
+RingbufHandle_t m_ws_rb = NULL;        // websocket ringbuf
+uint64_t s_time_new, s_time_old;
 static esp_timer_handle_t s_periodic_timer;
 static esp_timer_handle_t ws_periodic_timer;
 static uint64_t s_last_enter_time, s_now_enter_time;
@@ -159,6 +159,7 @@ static TaskHandle_t bt_ws_send_data_task_handler = NULL;
 static esp_hf_audio_state_t s_audio_code;
 
 //extern TaskHandle_t wifi_TaskHandle;
+char* pbuf_vad_opus = NULL;
 
 static void print_speed(void);
 
@@ -204,7 +205,7 @@ static void bt_app_hf_incoming_cb(const uint8_t *buf, uint32_t sz)
     s_time_new = esp_timer_get_time();
     s_data_num += sz;
 
-    if ( GetDeviceLedState() == kDeviceStateListening)
+    if ( IsDeviceListen() )
     {
         if (m_ws_rb ) {
             BaseType_t done = xRingbufferSend(m_ws_rb, buf, sz, 0);
@@ -213,9 +214,11 @@ static void bt_app_hf_incoming_cb(const uint8_t *buf, uint32_t sz)
             }
         }
     }
+    /*
     if ((s_time_new - s_time_old) >= 5000000) {
         print_speed();
     }
+    */
 }
 
 static uint32_t bt_app_hf_create_audio_data(uint8_t *p_buf, uint32_t sz)
@@ -258,9 +261,11 @@ static void bt_ws_send_data_task(void *arg)
     size_t get_size2 = 0;
     size_t interval_size = WS_GENERATOR_TICK_US / PCM_BLOCK_DURATION_US * WBS_PCM_INPUT_DATA_SIZE;
 //    size_t interval_size = get_appsr_feedbuff_size();
+    //interval_size = interval_size * 2  // 30ms for vad, 60ms for opus
 
     char *p_buf;
     char *buf = NULL;
+    //bool 
     if (!m_ws_rb) {
         return;
     }
@@ -294,13 +299,16 @@ static void bt_ws_send_data_task(void *arg)
                         vRingbufferReturnItem(m_ws_rb, p_buf);
                     }
                 }
+
+                app_sr_feed((int16_t *)buf); 
                 
-                if ( GetDeviceLedState() == kDeviceStateListening)
+                if ( GetDeviceLedState() == kDeviceStateListening_VAD_SPEECH)
                 {
                     //websocket_app_send(buf, interval_size); 
+
                     app_opus_enc_process(buf,interval_size,websocket_app_send);
                 }
-                //app_sr_feed((int16_t *)buf);            
+                           
                 osi_free(buf);
                 vRingbufferGetInfo(m_ws_rb, NULL, NULL, NULL, NULL, &item_size);
             }
@@ -377,7 +385,7 @@ static void bt_app_send_data_task(void *arg)
 void bt_app_send_data(void)
 {
     //SetDeviceLedState(kDeviceStateListening);   
-    //app_sr_StartDetection();
+    app_sr_StartDetection();
     app_opus_init();
     
     websocket_app1_start();
@@ -404,6 +412,11 @@ void bt_app_send_data(void)
             .callback = &bt_app_ws_send_data_timer_cb,
             .name = "ws_periodic"
     };
+    pbuf_vad_opus = malloc(4 * 1024);   // 1920 for wSBC
+    if (!pbuf_vad_opus) {
+        ESP_LOGE(BT_HF_TAG, "%s pbuf_vad_opus, no mem", __FUNCTION__);
+        return;
+    }
     ESP_ERROR_CHECK(esp_timer_create(&ws_periodic_timer_args, &ws_periodic_timer));
     ESP_ERROR_CHECK(esp_timer_start_periodic(ws_periodic_timer, WS_GENERATOR_TICK_US));
     //s_last_enter_time = esp_timer_get_time();
@@ -414,8 +427,14 @@ void bt_app_send_data(void)
 void bt_app_send_data_shut_down(void)
 {
     SetDeviceLedState(kDeviceStateBTConnected);  
-    //app_sr_StopDetection();
+    app_sr_StopDetection();
     app_opus_destroy();
+
+    if (pbuf_vad_opus)
+    {
+        free(pbuf_vad_opus);
+        pbuf_vad_opus = NULL;
+    }
     
     if (s_bt_app_send_data_task_handler) {
         vTaskDelete(s_bt_app_send_data_task_handler);

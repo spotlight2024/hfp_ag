@@ -2,7 +2,10 @@
 #include "esp_log.h"
 #include "esp_timer.h"
 
+
 static const char *TAG = "opus_codec";
+
+
 
 #ifdef USE_ESP_AUDIO_CODEC
 esp_audio_enc_handle_t encoder = NULL;
@@ -16,13 +19,16 @@ uint8_t opus_enc_buf[2500];
     .frame_duration     = ESP_OPUS_ENC_FRAME_DURATION_60_MS, \
     .application_mode   = ESP_OPUS_ENC_APPLICATION_VOIP,     \
     .complexity         = 3,                                 \
-    .enable_fec         = true,                             \
+    .enable_fec         = false,                             \
     .enable_dtx         = true,                             \
     .enable_vbr         = true,                             \
 }
 
 esp_opus_enc_config_t  opus_cfg;
 esp_audio_enc_config_t enc_cfg;
+
+//esp_audio_dec_cfg_t 
+//esp_audio_dec_info_t
 
 void app_opus_init(void)
 {
@@ -81,7 +87,7 @@ void app_opus_enc_process(char *p_buff, uint32_t in_sz, void(*ws_send)(const cha
     s_time_start = esp_timer_get_time();
     ret = esp_audio_enc_process(encoder, &in_frame, &out_frame);
     s_time_finish = esp_timer_get_time();
-    ESP_LOGI(TAG, "encoder len: %ld and cost time: %lld", out_frame.encoded_bytes, s_time_finish - s_time_start);
+    //ESP_LOGI(TAG, "encoder len: %ld and cost time: %lld", out_frame.encoded_bytes, s_time_finish - s_time_start);
 
     ws_send((char *)opus_enc_buf, out_frame.encoded_bytes);
 }

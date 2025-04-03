@@ -7,6 +7,7 @@
 #include "esp_wifi.h"
 #include "esp_log.h"
 #include "esp_event.h"
+#include "esp_timer.h"
 #include "nvs_flash.h"
 #include "esp_mac.h"
 #include "esp_netif.h"
@@ -26,6 +27,8 @@
 #define GOT_IP_EVENT 1
 
 EventGroupHandle_t app_ws_eventgroup = NULL;
+
+extern uint64_t s_time_old;
 
 extern const uint8_t server_root_cert_pem_start[] asm("_binary_cacert_pem_start");
 extern const uint8_t server_root_cert_pem_end[]   asm("_binary_cacert_pem_end");
@@ -75,24 +78,51 @@ void _WS_Parse_Incoming_Json(cJSON *root)
 	{
 		// gggccc Can not send ws in here, need use message to trig ws text send
 		esp_websocket_client_send_text(client,strStartManual, strlen(strStartManual),portMAX_DELAY);
-		SetDeviceLedState(kDeviceStateListening);
+		SetDeviceLedState(kDeviceStateListening_VAD_SILENCE);	
+		s_time_old = esp_timer_get_time();
 	} else if (!strcmp("tts",cJsonType->valuestring))
 	{
-		cJSON *cJsonState = cJSON_GetObjectItem(cJsonType,"state");
+		
+		cJSON *cJsonState = cJSON_GetObjectItem(root,"state");
 		if (strcmp(cJsonState->valuestring, "start") == 0)
 		{
 			SetDeviceLedState(kDeviceStateSpeaking);
+			ESP_LOGI("ASR", "get tts start");
 		}else if (strcmp(cJsonState->valuestring, "stop") == 0)
 		{
-			esp_websocket_client_send_text(client,strStartManual, strlen(strStartManual),portMAX_DELAY);
-			SetDeviceLedState(kDeviceStateListening);
+			//esp_websocket_client_send_text(client,strStartManual, strlen(strStartManual),portMAX_DELAY);
+			SetDeviceLedState(kDeviceStateListening_VAD_SILENCE);
+			s_time_old = esp_timer_get_time();
+			ESP_LOGI("ASR", "get tts stop");
+
+		}else if (strcmp(cJsonState->valuestring, "sentence_start") == 0)
+		{
+			cJSON *cJsonText = cJSON_GetObjectItem(root,"text");
+			ESP_LOGI("ASR", "%s", cJsonText->valuestring);
 		}
+		
 	}
 
-	char* strRecJson = cJSON_Print(root);
-	ESP_LOGI(TAG, "%s", strRecJson);
+	//char* strRecJson = cJSON_Print(root);
+	//ESP_LOGI(TAG, "%s", strRecJson);
 	//cJSON_free(strRecJson);
 
+}
+
+void ws_Send_Stop(void)
+{
+	if (client)
+	{
+		esp_websocket_client_send_text(client,strStop, strlen(strStop),portMAX_DELAY);
+	}
+}
+
+void ws_Send_Start(void)
+{
+	if (client)
+	{
+		esp_websocket_client_send_text(client,strStartManual, strlen(strStartManual),portMAX_DELAY);
+	}
 }
 
 
@@ -255,22 +285,26 @@ static void websocket_event_handler(void *handler_args, esp_event_base_t base, i
 		break;
 	// 收到数据
 	case WEBSOCKET_EVENT_DATA:
-		ESP_LOGI(TAG, "WEBSOCKET_EVENT_DATA");
-		ESP_LOGI(TAG, "Received opcode=%d", data->op_code);
+		//ESP_LOGI(TAG, "WEBSOCKET_EVENT_DATA");
+		//ESP_LOGI(TAG, "Received opcode=%d", data->op_code);
 		if (data->op_code == 0x08 && data->data_len == 2 )
 		{
 			ESP_LOGW(TAG, "Received closed message with code=%d", 256 * data->data_ptr[0] + data->data_ptr[1]);
 		}
 		else if (data->op_code == 0x02)
 		{
-			if (s_m_rb && data->data_len != 0) {
-        		BaseType_t done = xRingbufferSend(s_m_rb, (char *)data->data_ptr, data->data_len, 0);
-        		if (!done) {
-           			ESP_LOGE(TAG, "ws to module ringbuf send fail");
-				}
-			}       
+			if ( GetDeviceLedState() == kDeviceStateSpeaking)
+			{
+				if (s_m_rb && data->data_len != 0) {
+					// Here should decode opus and then put into ringbuf gggccc
+        			BaseType_t done = xRingbufferSend(s_m_rb, (char *)data->data_ptr, data->data_len, 0);
+        			if (!done) {
+           				ESP_LOGE(TAG, "ws to module ringbuf send fail");
+					}
+				}       
 			//ESP_LOGW(TAG, "Received=%.*s\n\n", data->data_len, (char *)data->data_ptr);
 			//ESP_LOGW(TAG, "Received=%d data", data->data_len);
+			}
 		}
 		else if ( data->op_code == 0x01)
 		{
@@ -284,7 +318,7 @@ static void websocket_event_handler(void *handler_args, esp_event_base_t base, i
 			}
 		
 		}
-		ESP_LOGW(TAG, "Total payload length=%d, data_len=%d, current payload offset=%d", data->payload_len, data->data_len, data->payload_offset);
+		//ESP_LOGW(TAG, "Total payload length=%d, data_len=%d, current payload offset=%d", data->payload_len, data->data_len, data->payload_offset);
 
 	  // 定时器复位
 		//xTimerReset(shutdown_signal_timer, portMAX_DELAY);

@@ -8,7 +8,8 @@
 #include "esp_audio_enc_reg.h"
 #include "esp_audio_enc.h"
 
-
+#include "esp_audio_dec_default.h"
+#include "esp_audio_dec_reg.h"
 #include "esp_audio_dec.h"
 #else
 

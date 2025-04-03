@@ -20,6 +20,9 @@ extern esp_bd_addr_t hf_peer_addr; // Declaration of peer device bdaddr
 void websocket_app1_start(void);
 void websocket_app1_stop(void);
 
+void ws_Send_Stop(void);
+void ws_Send_Start(void);
+
 void wifi_sta_init(void);
 
 void websocket_app_send(const char *buf, uint32_t sz);

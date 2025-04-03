@@ -39,7 +39,7 @@ void app_sr_feed_Task(void *arg)
             ESP_LOGW(TAG,"APP SR fetch error!");
             continue;
         }
-/*
+
         if ( res->vad_state == VAD_SPEECH )
         {
             SetDeviceLedState(kDeviceStateListening_VAD_SPEECH);
@@ -48,7 +48,7 @@ void app_sr_feed_Task(void *arg)
         {
             SetDeviceLedState(kDeviceStateListening_VAD_SILENCE);
         }
-*/
+
         //vad_state_t vad_state = res->vad_state;
         //wakenet_state_t wakeup_state = res->wakeup_state;
 
@@ -73,6 +73,8 @@ esp_err_t app_sr_start(void)
     models = esp_srmodel_init("model");     
 
     afe_config = afe_config_init("M", models, AFE_TYPE_SR, AFE_MODE_HIGH_PERF);
+    afe_config->vad_mode = VAD_MODE_3;
+    afe_config->vad_min_noise_ms = 2000;
     afe_config_print(afe_config); // print all configurations
 
     // 获取句柄

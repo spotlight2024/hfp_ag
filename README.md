@@ -2,6 +2,7 @@
 This project baseon ESP32 HF-AG example, So keep his structure and add feature for voice transfer such as opus codec, websocket. 
 After change flash SPI to 80MHz and enable QIO feature, 60ms pcm package opus encoder time change to 20~30ms, so it can be used. 
 
+# Need to do in local
 Should change /main/bt_wifi_info.h setting for bt headset and wifi ap ssid, password
 
 #define BT_HEADSET_MAC  {0x50, 0xC0, 0xF0, 0x94, 0xAD,0xD3};
@@ -17,8 +18,10 @@ Should change /main/bt_wifi_info.h setting for bt headset and wifi ap ssid, pass
 4. ....
 
 # issue
-For ESP32 BT/Wifi time division reason, BT voice always have problem.
-Do not know it can be used by AI or not, Need test. 
+1. For ESP32 BT/Wifi time division reason, BT voice always have problem.
+   Do not know it can be used by AI or not, Need test. 
+2. Download cacert.pem from https://curl.se/docs/caextract.html
+3. 
 
 
 
