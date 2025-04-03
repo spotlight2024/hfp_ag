@@ -16,8 +16,6 @@
 #include "bt_wifi_info.h"
 
 // if you want to connect a specific device, add it's bda here
-//esp_bd_addr_t hf_peer_addr = {0xB0, 0xF1, 0xA3, 0x01, 0x2D,0x2E};
-//esp_bd_addr_t hf_peer_addr = {0x50, 0xC0, 0xF0, 0x94, 0xAD,0xD3};
 esp_bd_addr_t hf_peer_addr = BT_HEADSET_MAC
 
 #define HF_CMD_HANDLER(cmd)    static int hf_##cmd##_handler(int argn, char **argv)

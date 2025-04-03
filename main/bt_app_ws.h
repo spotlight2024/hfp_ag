@@ -8,13 +8,6 @@
 #define __BT_APP_WS_H__
 
 #include <stdint.h>
-/*
-#include <stdint.h>
-#include "esp_hf_ag_api.h"
-#include "esp_bt_defs.h"
-
-extern esp_bd_addr_t hf_peer_addr; // Declaration of peer device bdaddr
-*/
 
 // #define WS_TAG               "BT_APP_WS"
 void websocket_app1_start(void);
