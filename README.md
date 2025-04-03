@@ -15,7 +15,8 @@ Should change /main/bt_wifi_info.h setting for bt headset and wifi ap ssid, pass
 1. do opus decoder and send pcm to bt
 2. Adjust device state to match service
 3. put above setting into NV and add a command to set them
-4. ....
+4. do not use timer to start encode task, run it seperately
+5. ....
 
 # issue
 1. For ESP32 BT/Wifi time division reason, BT voice always have problem.

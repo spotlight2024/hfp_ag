@@ -24,5 +24,6 @@ void SetDeviceLedState(enum DeviceState state);
 enum DeviceState GetDeviceLedState(void);
 void Init_Status_Led(void);
 bool IsDeviceListen(void);
+bool IsDeviceSpeaking(void);
 
 #endif

@@ -246,10 +246,12 @@ static void print_speed(void)
 
 static void bt_app_ws_send_data_timer_cb(void *arg)
 {
+/*    
     if (!xSemaphoreGive(ws_send_data_Semaphore)) {
         ESP_LOGE(BT_HF_TAG, "%s websocket xSemaphoreGive failed", __func__);
         return;
     }
+*/    
     return;
 }
 
@@ -270,7 +272,7 @@ static void bt_ws_send_data_task(void *arg)
         return;
     }
     for (;;) {
-        if (xSemaphoreTake(ws_send_data_Semaphore, (TickType_t)portMAX_DELAY)) {
+        //if (xSemaphoreTake(ws_send_data_Semaphore, (TickType_t)portMAX_DELAY)) {
             
             vRingbufferGetInfo(m_ws_rb, NULL, NULL, NULL, NULL, &item_size);
 
@@ -312,16 +314,19 @@ static void bt_ws_send_data_task(void *arg)
                 osi_free(buf);
                 vRingbufferGetInfo(m_ws_rb, NULL, NULL, NULL, NULL, &item_size);
             }
-            
-        }
+            vTaskDelay( 60 / portTICK_PERIOD_MS );
+        //}
     }
 }
 
 static void bt_app_send_data_timer_cb(void *arg)
 {
-    if (!xSemaphoreGive(s_send_data_Semaphore)) {
-        ESP_LOGE(BT_HF_TAG, "%s bt xSemaphoreGive failed", __func__);
-        return;
+    if ( IsDeviceSpeaking() )
+    {
+        if (!xSemaphoreGive(s_send_data_Semaphore)) {
+            ESP_LOGE(BT_HF_TAG, "%s bt xSemaphoreGive failed", __func__);
+            return;
+        }
     }
     return;
 }
@@ -368,7 +373,7 @@ static void bt_app_send_data_task(void *arg)
             osi_free(buf);
             */
             vRingbufferGetInfo(s_m_rb, NULL, NULL, NULL, NULL, &item_size);
-            //ESP_LOGE("GGGCCC", "s_m_rb-item_size: %d", item_size);
+            //ESP_LOGI("GGGCCC", "s_m_rb-item_size: %d", item_size);
 
             if(s_audio_code == ESP_HF_AUDIO_STATE_CONNECTED_MSBC) {
                 if(item_size >= WBS_PCM_INPUT_DATA_SIZE) {
@@ -402,12 +407,12 @@ void bt_app_send_data(void)
     s_last_enter_time = esp_timer_get_time();
 
     ws_send_data_Semaphore = xSemaphoreCreateBinary();
-    m_ws_rb = xRingbufferCreate(100*1024, RINGBUF_TYPE_BYTEBUF);
+    m_ws_rb = xRingbufferCreate(200*1024, RINGBUF_TYPE_BYTEBUF);
     if ( !m_ws_rb) {
         ESP_LOGE(BT_HF_TAG, "apply websocket ringbuff error!");
     }
     //xTaskCreate(bt_ws_send_data_task, "WS_SendDataTask", 48 * 1024, NULL, configMAX_PRIORITIES - 15, &bt_ws_send_data_task_handler);
-    xTaskCreatePinnedToCore(bt_ws_send_data_task, "WS_SendDataTask", 48 * 1024, NULL, configMAX_PRIORITIES - 5, &bt_ws_send_data_task_handler,0);
+    xTaskCreatePinnedToCore(bt_ws_send_data_task, "WS_SendDataTask", 48 * 1024, NULL, configMAX_PRIORITIES - 15, &bt_ws_send_data_task_handler,0);
     const esp_timer_create_args_t ws_periodic_timer_args = {
             .callback = &bt_app_ws_send_data_timer_cb,
             .name = "ws_periodic"

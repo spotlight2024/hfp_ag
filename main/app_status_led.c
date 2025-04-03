@@ -33,6 +33,11 @@ bool IsDeviceListen(void)
     return (device_state_ == kDeviceStateListening_VAD_SILENCE || device_state_ == kDeviceStateListening_VAD_SPEECH );
 }
 
+bool IsDeviceSpeaking(void)
+{
+    return (device_state_ == kDeviceStateSpeaking );
+}
+
 void SetDeviceLedState(enum DeviceState state)
 {
     led_set_off(WS2812);
