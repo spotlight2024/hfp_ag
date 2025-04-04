@@ -6,6 +6,7 @@ idf_component_register(SRCS "app_hf_msg_set.c"
                             "app_status_led.c"
                             "app_sr.c"
                             "app_opus_codec.c"
+                            "app_nv.c"
                             "main.c"
                     INCLUDE_DIRS "."
                     EMBED_TXTFILES cacert.pem)

@@ -3,20 +3,16 @@ This project baseon ESP32 HF-AG example, So keep his structure and add feature f
 After change flash SPI to 80MHz and enable QIO feature, 60ms pcm package opus encoder time change to 20~30ms, so it can be used. 
 
 # Need to do in local
-Should change /main/bt_wifi_info.h setting for bt headset and wifi ap ssid, password
-
-#define BT_HEADSET_MAC  {0x50, 0xC0, 0xF0, 0x94, 0xAD,0xD3};
-
-#define ESP_WIFI_STA_SSID "ssid"
-#define ESP_WIFI_STA_PASSWD "password"
-#define CONFIG_WEBSOCKET_URI "ws://ip:port"
+use "setnv type str" command
+## setnv 0 ""  ---  for bt headset mac address
+## setnv 1 ""  ---  for wifi ssid
+## setnv 2 ""  ---  for wifi password
+## setnv 3 ""  ---  for websocket server address. "ws://ip/port"
 
 # Need todo
 1. do opus decoder and send pcm to bt
 2. Adjust device state to match service
-3. put above setting into NV and add a command to set them
-4. do not use timer to start encode task, run it seperately
-5. ....
+3. ....
 
 # issue
 1. For ESP32 BT/Wifi time division reason, BT voice always have problem.

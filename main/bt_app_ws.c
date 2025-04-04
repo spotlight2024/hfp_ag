@@ -21,8 +21,7 @@
 //#include "esp_crt_bundle.h"
 
 #include "app_status_led.h"
-#include "bt_wifi_info.h"
-
+//#include "bt_wifi_info.h"
 
 #define GOT_IP_EVENT 1
 
@@ -39,7 +38,8 @@ extern const uint8_t server_root_cert_pem_end[]   asm("_binary_cacert_pem_end");
 //static const int server_supported_ciphersuites[] = {MBEDTLS_TLS_RSA_WITH_AES_256_GCM_SHA384, MBEDTLS_TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256, 0};
 //static const int server_unsupported_ciphersuites[] = {MBEDTLS_TLS_ECDHE_RSA_WITH_ARIA_128_CBC_SHA256, 0};
 
-
+extern uint8_t ssid[32];
+extern uint8_t pwd[64];
 // 目标服务器
 //#define CONFIG_WEBSOCKET_URI "ws://demo.piesocket.com/v3/channel_123?api_key=VCXCEuvhGcBDP7XhiJJUDvR1e1D3eiVjgZ9VRiaV&notify_self"
 
@@ -219,13 +219,17 @@ void wifi_sta_init(void)
 	ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
 
 	// STA详细配置
+	
 	wifi_config_t sta_config = {
 			.sta = {
-					.ssid = ESP_WIFI_STA_SSID,
-					.password = ESP_WIFI_STA_PASSWD,
+					.ssid = "",
+					.password = "",
 					.bssid_set = false,
 			},
 	};
+	memcpy(sta_config.sta.ssid,ssid,32);
+	memcpy(sta_config.sta.password,pwd,64);
+	
 	ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &sta_config));
 
 	//----------------启动阶段-------------------
@@ -337,6 +341,7 @@ static void websocket_event_handler(void *handler_args, esp_event_base_t base, i
 	}
 }
 
+extern char ws_addr[64];
 // WebSocket客户端
 void websocket_app1_start(void)
 {
@@ -350,7 +355,7 @@ void websocket_app1_start(void)
 	//shutdown_sema = xSemaphoreCreateBinary();
 
 	// 配置目标服务器
-	websocket_cfg.uri = CONFIG_WEBSOCKET_URI;
+	websocket_cfg.uri = ws_addr;   //CONFIG_WEBSOCKET_URI;
 	websocket_cfg.task_prio = (configMAX_PRIORITIES - 4);
 	websocket_cfg.use_global_ca_store = true;
 	//websocket_cfg.transport = WEBSOCKET_TRANSPORT_OVER_SSL;

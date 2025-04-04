@@ -13,10 +13,11 @@
 #include "argtable3/argtable3.h"
 #include "esp_log.h"
 #include "bt_app_ws.h"
-#include "bt_wifi_info.h"
+//#include "bt_wifi_info.h"
+#include "app_nv.h"
 
 // if you want to connect a specific device, add it's bda here
-esp_bd_addr_t hf_peer_addr = BT_HEADSET_MAC
+esp_bd_addr_t hf_peer_addr = {0};        // = BT_HEADSET_MAC
 
 #define HF_CMD_HANDLER(cmd)    static int hf_##cmd##_handler(int argn, char **argv)
 
@@ -232,10 +233,40 @@ HF_CMD_HANDLER(dn)
 }
 
 //
-//Dial Call from AG
+//print task list
 HF_CMD_HANDLER(tasklist)
 {
     esp_print_tasks();
+    return 0;
+}
+
+static nv_type_t nv_type_tbl[] = {
+    {0, BT_HS,},
+    {1, SSID,},
+    {2, PWD,},
+    {3, WS_ADDR,},
+};
+
+//Set BT Headset MAC address
+HF_CMD_HANDLER(setnv)
+{
+    if (argn != 3) {
+        ESP_LOGE("MSG_SET", "setnv number of arguments was wrong");
+        return 1;
+    }
+
+    int nv_type;
+
+    sscanf(argv[1], "%d", &nv_type);
+    
+    if ( nv_type >= sizeof(nv_type_tbl)/sizeof(nv_type_t)) {
+        ESP_LOGE("MSG_SET", "nv type was wrong");
+        return 1;
+    }
+
+    AppNVWrite(nv_type_tbl[nv_type].nvkey,argv[2]);
+    ESP_LOGI("MSG_SET","setnv  key:%s  value: %s\n", nv_type_tbl[nv_type].nvkey, argv[2]);
+    
     return 0;
 }
 
@@ -256,6 +287,7 @@ static hf_msg_hdl_t hf_cmd_tbl[] = {
     {"end",          hf_end_handler},
     {"dn",           hf_dn_handler},
     {"tasklist",     hf_tasklist_handler},
+    {"setnv",        hf_setnv_handler},
 };
 
 #define HF_ORDER(name)   name##_cmd
@@ -275,7 +307,8 @@ enum hf_cmd_idx {
     HF_CMD_IDX_RC,            /*Reject Incoming Call from AG*/
     HF_CMD_IDX_END,           /*End up a call by AG*/
     HF_CMD_IDX_DN,            /*Dial Number by AG, e.g. d 11223344*/
-    HF_CMD_IDX_TASKLIST
+    HF_CMD_IDX_TASKLIST,      /* list freertos task*/
+    HF_CMD_IDX_SETNV        /* Set NV*/
 };
 
 static char *hf_cmd_explain[] = {
@@ -295,6 +328,7 @@ static char *hf_cmd_explain[] = {
     "End up a call by AG",
     "Dial Number by AG, e.g. d 11223344",
     "list esp task list",
+    "Set NV",
 };
 typedef struct {
     struct arg_str *tgt;
@@ -461,4 +495,12 @@ void register_hfp_ag(void)
             .func = hf_cmd_tbl[HF_CMD_IDX_TASKLIST].handler,
         };
         ESP_ERROR_CHECK(esp_console_cmd_register(&HF_ORDER(tasklist)));
+
+        const esp_console_cmd_t HF_ORDER(setnv) = {
+            .command = "setnv",
+            .help = hf_cmd_explain[HF_CMD_IDX_SETNV],
+            .hint = NULL,
+            .func = hf_cmd_tbl[HF_CMD_IDX_SETNV].handler,
+        };
+        ESP_ERROR_CHECK(esp_console_cmd_register(&HF_ORDER(setnv)));
 }

@@ -28,11 +28,13 @@
 #include "bt_app_ws.h"
 #include "driver/gpio.h"
 
+
 //#include "esp_tls.h"
 //#include "esp_crt_bundle.h"
 
 #include "app_status_led.h"
 #include "app_sr.h"
+#include "app_nv.h"
 
 #define BT_HF_AG_TAG    "HF_AG_DEMO_MAIN"
 
@@ -105,7 +107,33 @@ void app_main(void)
     ESP_ERROR_CHECK(ret);
     ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_BLE));
 
+    AppNVInit();
     Init_Status_Led();  
+
+    esp_console_repl_t *repl = NULL;
+    esp_console_repl_config_t repl_config = ESP_CONSOLE_REPL_CONFIG_DEFAULT();
+    esp_console_dev_uart_config_t uart_config = ESP_CONSOLE_DEV_UART_CONFIG_DEFAULT();
+    repl_config.prompt = "hfp_ag>";
+
+    // init console REPL environment
+    ESP_ERROR_CHECK(esp_console_new_repl_uart(&uart_config, &repl_config, &repl));
+
+    /* Register commands */
+    register_hfp_ag();
+    printf("\n ==================================================\n");
+    printf(" |       Steps to test hfp_ag                     |\n");
+    printf(" |                                                |\n");
+    printf(" |  1. Print 'help' to gain overview of commands  |\n");
+    printf(" |  2. Setup a service level connection           |\n");
+    printf(" |  3. Run hfp_ag to test                         |\n");
+    printf(" |                                                |\n");
+    printf(" =================================================\n\n");
+
+    // start console REPL
+    //linenoiseSetCompletionCallback(&esp_console_get_completion);
+    //linenoiseSetHintsCallback((linenoiseHintsCallback*) &esp_console_get_hint);
+    ESP_ERROR_CHECK(esp_console_start_repl(repl));
+
     
     // 配置启动WIFI
 	wifi_sta_init();
@@ -146,45 +174,11 @@ void app_main(void)
     app_gpio_aec_io_cfg();
 #endif /* ACOUSTIC_ECHO_CANCELLATION_ENABLE */
 
-    esp_console_repl_t *repl = NULL;
-    esp_console_repl_config_t repl_config = ESP_CONSOLE_REPL_CONFIG_DEFAULT();
-    esp_console_dev_uart_config_t uart_config = ESP_CONSOLE_DEV_UART_CONFIG_DEFAULT();
-    repl_config.prompt = "hfp_ag>";
-
-    // init console REPL environment
-    ESP_ERROR_CHECK(esp_console_new_repl_uart(&uart_config, &repl_config, &repl));
-
-    /* Register commands */
-    register_hfp_ag();
-    printf("\n ==================================================\n");
-    printf(" |       Steps to test hfp_ag                     |\n");
-    printf(" |                                                |\n");
-    printf(" |  1. Print 'help' to gain overview of commands  |\n");
-    printf(" |  2. Setup a service level connection           |\n");
-    printf(" |  3. Run hfp_ag to test                         |\n");
-    printf(" |                                                |\n");
-    printf(" =================================================\n\n");
-
-    // start console REPL
-    ESP_ERROR_CHECK(esp_console_start_repl(repl));
-
-    
-
-    // 创建默认事件循环
-	//ESP_ERROR_CHECK(esp_event_loop_create_default());
-
-    //ESP_ERROR_CHECK(example_connect());
     app_sr_start();
-
 
 	// 等待wifi连接成功(暂时这样处理)
 	vTaskDelay(5000 / portTICK_PERIOD_MS);
 
     //esp_tls_init_global_ca_store();
-
-      
-	// 创建WebSocket客户端
-	//websocket_app1_start();
-     
 
 }
